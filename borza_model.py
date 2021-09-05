@@ -1,42 +1,16 @@
 ###MODEL
 
-####ne moreš prodat preveč
-
-#import db_borza
-#import os.path
-
 import urllib.request, json
 from datetime import datetime, timedelta
 import sys
 
-#datoteka = []
 
-#vrednostni_papirji =[]
-
-
-#url = 'https://rest.ljse.si/web/Bvt9fe2peQ7pwpyYqODM/price-list/XLJU/2021-08-27/json'
 url = 'https://rest.ljse.si/web/Bvt9fe2peQ7pwpyYqODM/price-list/XLJU/'+'2021-08-27'+'/json'
 response = urllib.request.urlopen(url)
 data = json.loads(response.read())##potegne z neta podatke
-#print(round(float(data['securities'][1]['close_price'])*5,3))
-datum = datetime.today().strftime('%Y-%m-%d')
-#print(datetime.today()-timedelta(days=2))
-#print(datetime.today().weekday())
-#for i in range(len(data['securities'])):
-#    if data['securities'][i]['symbol']=='KRKG':
-#        print(data['securities'][i]['close_price'])
 
-#db_borza='borza.json'
-"""
-def shrani():
-    file = open(db_borza, 'w')
-    dic = {
-        'uporabniki': [vlagatelj.__dict__ for vlagatelj in datoteka],
-        ###'vrednostni_papirji':[igralec.__dict__ for igralec in nekajnekaj]
-    }
-    json.dump(dic, file,indent='  ')
-    file.close()
-"""
+datum = datetime.today().strftime('%Y-%m-%d')
+
 def danasnji_dan():
     if datetime.today().weekday() == 6:
         datum = datetime.today()-timedelta(days=2)
@@ -46,7 +20,7 @@ def danasnji_dan():
         datum = datetime.today()
     return datum.date()
 
-def izbrani_datum(dan):
+def izbrani_datum(dan):#sobote in nedelje zmakne na petek
     if datetime.strptime(dan.replace(' ',''), '%d.%m.%Y').weekday() == 6:
         izbrani_dan = datetime.strptime(dan.replace(' ',''), '%d.%m.%Y')-timedelta(days=2)
     elif datetime.strptime(dan.replace(' ',''), '%d.%m.%Y').weekday() == 5:
@@ -55,7 +29,7 @@ def izbrani_datum(dan):
         izbrani_dan = datetime.strptime(dan.replace(' ',''), '%d.%m.%Y')
     return izbrani_dan.date()
 
-def podatki_danes():
+def podatki_danes():#treba preveriti, da ne gre z anedeljo ali soboto, če je dan ned ali sob, premakne na pet
     if datetime.today().weekday() == 6:
         podatki = url + str(datetime.today()-timedelta(days=2)) + '/json'
     elif datetime.today().weekday() == 5:
@@ -82,11 +56,11 @@ class vlagatelj:
         else:    
             datoteka.append(self)
         
-    ####shrani()
+    
     
     def poisci_ime(self, datoteka):
         if datoteka == []:
-            print('xxxxxxx')
+            
             return 0
         else:
             for vlagatelj in datoteka:
@@ -104,23 +78,17 @@ class vlagatelj:
         for i in range(len(datoteka)):
             if datoteka[i][0]==self.ime:
                 return self
-#        return self.ime, self.geslo, datoteka[self.ime]
-#    def poisci_ime(self):
-#        for i in range(len(datoteka)):
-#            if datoteka[i][0]==self.ime:
-#                return i
 
-##['janez','janezovo_geslo',[janezova_trasakcija1, janezova_transakcija2,...]]
-##janezova_transakcija1=[st_papirjev, oznaka, datum, vrednost, stanje ###st_papirjev_zdaj###, saldo]
+
+
     def dodaj_v_dat(self, datoteka):
         datoteka.append(self)
-        #print(datoteka)
-        #shrani()
 
     def vnesi_transakcijo(self, st_papirjev, simbol, datum, datoteka):
         danes = danasnji_dan()
         datum = izbrani_datum(datum)
-        if danes >= datum:
+        prvi_dan_na_svetu=izbrani_datum('03.01.2018')#od takrat naprej obstajajo podatki
+        if danes >= datum and prvi_dan_na_svetu <= datum:
             url = 'https://rest.ljse.si/web/Bvt9fe2peQ7pwpyYqODM/price-list/XLJU/'+ str(datum) + '/json'
         else:
             return False
@@ -153,7 +121,7 @@ class vlagatelj:
         else:
             return False
 
-#        shrani()
+
 
 
     def trenutni_portfelj(self, datoteka):#izpiše simbol, št enot, današnja vrendost ### self ###
@@ -222,7 +190,7 @@ class vlagatelj:
                 profit = oseba.izplacila(datoteka) - oseba.vplacila(datoteka) + oseba.stanje(datoteka)
         return profit
     
-    def donosnost(self, datoteka):
+    def donosnost(self, datoteka):#try zaradi možnosti praznega seznama transakcij->donosnost torej zaenkrat 0
         donosnost = 0
         for oseba in datoteka:
             if oseba.ime == self.ime:
