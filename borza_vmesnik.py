@@ -1,8 +1,12 @@
-###še log out button->v portfelj.html narest, in potem, da te redirecta na index_borza.html
-from bottle import route, run, template, request, response, redirect
+
+from bottle import route, run, static_file, template, request, response, redirect
 import borza_db
 from borza_model import vlagatelj
 import borza_model
+
+
+
+
 
 @route('/nov_uporabnik', method = 'POST')
 def logiranje():
@@ -23,7 +27,6 @@ def logiranje():
             borza_db.datoteka.append(nov_clovek)    
             borza_db.shrani123()
             response.set_cookie('user', uporabnik)
-            #return template('portfelj.html', datoteka = borza_db.datoteka, rezultat='Uporabnik je uspešno kreiran')##treba še poiskat!!!!!!!!!!!!!!!
             return template('portfelj.html',ime_uporabnika = nov_clovek.ime, transakcije=nov_clovek.transakcije, podatki_uporabnika = nov_clovek.trenutni_portfelj(borza_db.datoteka), rezultat='Uporabnik uspešno kreiran.', povprecje=borza_model.povprecje(borza_db.datoteka), donosnost=nov_clovek.donosnost(borza_db.datoteka), stanje=nov_clovek.stanje(borza_db.datoteka))
         else:
             rezultat='Uporabnik s tem uporabniškim imenom že obstaja. Vnesite drugo ime.'
@@ -49,10 +52,8 @@ def logiranje():
     
 @route('/', method = 'GET')
 def index():
-    #response.delete_cookie('')
-    #return template('index_borza.html', vlagatelji=borza_model.datoteka)
     return template('index_borza.html', datoteka = borza_db.datoteka, rezultat='')
-
+##Vnasanje nove transakcije
 @route('/vnos', method = 'POST')
 def vnos_post():
     rezultat = ''
@@ -67,13 +68,24 @@ def vnos_post():
     
     for oseba in borza_db.datoteka:
         if oseba.ime == user:
-            if oseba.vnesi_transakcijo(kolicina, simbol, datum, borza_db.datoteka)==False:
-                rezultat = 'Vnos transakcije ni uspel.'
-            else:
-                rezultat = 'Vnos transakcije je uspel.'
-                borza_db.shrani123()
-            return template('portfelj.html',ime_uporabnika = oseba.ime, podatki_uporabnika = oseba.trenutni_portfelj(borza_db.datoteka), transakcije = oseba.transakcije, rezultat='', povprecje=borza_model.povprecje(borza_db.datoteka), donosnost=oseba.donosnost(borza_db.datoteka), stanje=oseba.stanje(borza_db.datoteka))
+            try:
+                borza_model.izbrani_datum(datum)
+            except ValueError:
+                rezultat='Prosim vnesi veljaven datum'
 
+            if rezultat == '':
+                if oseba.vnesi_transakcijo(kolicina, simbol, datum, borza_db.datoteka)==False:
+                    rezultat = 'Vnos transakcije ni uspel.'
+                else:
+                    rezultat = 'Vnos transakcije je uspel.'
+                    borza_db.shrani123()
+            return template('portfelj.html',ime_uporabnika = oseba.ime, podatki_uporabnika = oseba.trenutni_portfelj(borza_db.datoteka), transakcije = oseba.transakcije, rezultat=rezultat, povprecje=borza_model.povprecje(borza_db.datoteka), donosnost=oseba.donosnost(borza_db.datoteka), stanje=oseba.stanje(borza_db.datoteka))
+
+
+@route('/odjava', method = 'POST')
+def odjava():
+    response.delete_cookie('user')
+    return template('index_borza.html', datoteka = borza_db.datoteka, rezultat='Odjava je uspela')
 
 
 borza_db.nalozi()
