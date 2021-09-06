@@ -10,7 +10,7 @@ def shrani123():
     file = open(db_borza, 'w')
     dic = {
         'uporabniki': [vlagatelj.__dict__ for vlagatelj in datoteka],
-        ###'vrednostni_papirji':[igralec.__dict__ for igralec in nekajnekaj]
+        ##
     }
     json.dump(dic, file,indent='  ')
     file.close()
