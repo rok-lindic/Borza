@@ -3,21 +3,26 @@
 import urllib.request, json
 from datetime import datetime, timedelta
 import sys
+import time
 
+url = 'https://rest.ljse.si/web/Bvt9fe2peQ7pwpyYqODM/price-list/XLJU/'#+str(danasnji_dan)+'/json'
 
-url = 'https://rest.ljse.si/web/Bvt9fe2peQ7pwpyYqODM/price-list/XLJU/'+'2021-08-27'+'/json'
-response = urllib.request.urlopen(url)
-data = json.loads(response.read())##potegne z neta podatke
-
-datum = datetime.today().strftime('%Y-%m-%d')
-
-def danasnji_dan():
-    if datetime.today().weekday() == 6:
+def danasnji_dan():#Ne vem tocno, kdaj posodobijo podatke, po izkušnjah pa so ob 17h bili posodobljeni, zato če je ura pred 17h, dan zamaknem nazaj
+    if datetime.today().time().hour < 17 and datetime.today().weekday() == 6:#podatkov ne posodabljajo zjutraj
         datum = datetime.today()-timedelta(days=2)
-    elif datetime.today().weekday() == 5:
+    elif datetime.today().time().hour < 17 and datetime.today().weekday() == 5:#podatkov ne posodabljajo zjutraj
         datum = datetime.today()-timedelta(days=1)
+    elif datetime.today().time().hour < 17 and datetime.today().weekday() == 0:#danasnji dna pnedeljek, ura manj kot 17h
+        datum = datetime.today()-timedelta(days=3)#nastavi na petek prejsnji teden    
+    elif datetime.today().time().hour >= 17:
+        if datetime.today().weekday() == 6:
+            datum = datetime.today()-timedelta(days=2)
+        elif datetime.today().weekday() == 5:
+            datum = datetime.today()-timedelta(days=1)
+        else:
+            datum = datetime.today()
     else:
-        datum = datetime.today()
+        datum = datum = datetime.today()-timedelta(days=1)
     return datum.date()
 
 def izbrani_datum(dan):#sobote in nedelje zmakne na petek
@@ -29,15 +34,6 @@ def izbrani_datum(dan):#sobote in nedelje zmakne na petek
         izbrani_dan = datetime.strptime(dan.replace(' ',''), '%d.%m.%Y')
     return izbrani_dan.date()
 
-def podatki_danes():#treba preveriti, da ne gre z anedeljo ali soboto, če je dan ned ali sob, premakne na pet
-    if datetime.today().weekday() == 6:
-        podatki = url + str(datetime.today()-timedelta(days=2)) + '/json'
-    elif datetime.today().weekday() == 5:
-        podatki = url + str(datetime.today()-timedelta(days=1)) + '/json'
-    else:
-        podatki = url + str(datetime.today()) + '/json'
-    return podatki
-podatki= podatki_danes()
 
 class vlagatelj:
 
@@ -57,16 +53,7 @@ class vlagatelj:
             datoteka.append(self)
         
     
-    
-    def poisci_ime(self, datoteka):
-        if datoteka == []:
-            
-            return 0
-        else:
-            for vlagatelj in datoteka:
-                if vlagatelj.ime == self.ime:
-                    return datoteka.index(self)
-    
+        
 
     def preveri_uporabnika(self, geslo):
         if geslo == self.geslo():
